@@ -184,9 +184,15 @@ body {
 }
 
 /* ── Tabs ── */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   background: var(--tab-bg);
   border-radius: 14px;
   padding: 4px;
@@ -195,18 +201,20 @@ body {
   scrollbar-width: none;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  flex: 1;
+  min-width: 0;
 }
 .tabs::-webkit-scrollbar { display: none; }
 
 .tab {
   flex: 1;
   min-width: 0;
-  padding: 10px 6px;
+  padding: 8px 4px;
   border: none;
   background: transparent;
   color: var(--tab-color);
   font-family: 'Inter', sans-serif;
-  font-size: 9px;
+  font-size: 0;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -214,12 +222,50 @@ body {
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.tab i {
+  font-size: 18px;
+  display: block;
+}
+.tab .tab-label {
+  font-size: 8px;
+  display: block;
+  line-height: 1;
 }
 
 .tab.active {
   background: linear-gradient(135deg, var(--green), #009960);
   color: #fff;
   box-shadow: 0 4px 16px rgba(0,184,114,0.35);
+}
+
+.send-tab {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border: none;
+  background: linear-gradient(135deg, var(--green), #009960);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(0,184,114,0.35);
+}
+.send-tab i { font-size: 16px; }
+.send-tab.active {
+  box-shadow: 0 4px 20px rgba(0,184,114,0.5);
+  transform: scale(1.03);
 }
 
 /* ── Sections ── */
@@ -1286,14 +1332,16 @@ body, .card, .expense-item, .bill-card, .budget-card, .wish-item, .modal, .empty
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" style="position:absolute;right:0;top:4px"><i class="ri-moon-fill"></i></button>
     <img src="logo.png" alt="AKILI MONEY" style="height:90px;display:block;margin:0 auto">
   </div>
-  <div class="tabs" id="mainTabs">
-    <button class="tab active" data-tab="expenses">Expenses</button>
-    <button class="tab" data-tab="income">Income</button>
-    <button class="tab" data-tab="budget">Budget</button>
-    <button class="tab" data-tab="savings">Savings</button>
-    <button class="tab" data-tab="debt">Debt</button>
-    <button class="tab" data-tab="goals">Goals</button>
-    <button class="tab" data-tab="send">Send $</button>
+  <div class="nav-bar">
+    <div class="tabs" id="mainTabs">
+      <button class="tab active" data-tab="expenses"><i class="ri-shopping-bag-3-line"></i><span class="tab-label">Expenses</span></button>
+      <button class="tab" data-tab="income"><i class="ri-wallet-3-line"></i><span class="tab-label">Income</span></button>
+      <button class="tab" data-tab="budget"><i class="ri-pie-chart-line"></i><span class="tab-label">Budget</span></button>
+      <button class="tab" data-tab="savings"><i class="ri-safe-2-line"></i><span class="tab-label">Savings</span></button>
+      <button class="tab" data-tab="debt"><i class="ri-bank-card-line"></i><span class="tab-label">Debt</span></button>
+      <button class="tab" data-tab="goals"><i class="ri-flag-line"></i><span class="tab-label">Goals</span></button>
+    </div>
+    <button class="send-tab" data-tab="send" id="sendTabBtn"><i class="ri-send-plane-fill"></i>Send</button>
   </div>
 </div>
 
@@ -1681,13 +1729,18 @@ function fmt(n) {
 }
 
 // ─── TABS ───
+function activateTab(clickedTab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sendTabBtn').classList.remove('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  clickedTab.classList.add('active');
+  document.getElementById('sec-' + clickedTab.dataset.tab).classList.add('active');
+}
 document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('sec-' + tab.dataset.tab).classList.add('active');
-  });
+  tab.addEventListener('click', () => activateTab(tab));
+});
+document.getElementById('sendTabBtn').addEventListener('click', function() {
+  activateTab(this);
 });
 
 // ─── RENDER ALL ───
