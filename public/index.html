@@ -955,6 +955,55 @@ body {
   color: var(--red);
 }
 
+/* ── Payout Buttons ── */
+.payout-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 10px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: var(--glass);
+  color: var(--text-sub);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.payout-btn.active {
+  border-color: var(--green);
+  background: rgba(0,184,114,0.1);
+  color: var(--green);
+}
+
+/* ── Transfer History Item ── */
+.txn-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 10px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow);
+}
+.txn-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.txn-status.paid { background: rgba(0,184,114,0.12); color: var(--green); }
+.txn-status.processing { background: rgba(79,110,247,0.12); color: var(--blue); }
+.txn-status.pending, .txn-status.created { background: rgba(245,158,11,0.12); color: var(--orange); }
+.txn-status.failed, .txn-status.cancelled { background: rgba(240,98,113,0.12); color: var(--red); }
+
 /* ── Nav Arrows ── */
 .nav-arrow {
   background: var(--nav-btn-bg);
@@ -1244,6 +1293,7 @@ body, .card, .expense-item, .bill-card, .budget-card, .wish-item, .modal, .empty
     <button class="tab" data-tab="savings">Savings</button>
     <button class="tab" data-tab="debt">Debt</button>
     <button class="tab" data-tab="goals">Goals</button>
+    <button class="tab" data-tab="send">Send $</button>
   </div>
 </div>
 
@@ -1416,6 +1466,103 @@ body, .card, .expense-item, .bill-card, .budget-card, .wish-item, .modal, .empty
       <button id="confirmCancel" style="flex:1;padding:14px;border-radius:14px;border:2px solid var(--border);background:var(--card);font-family:Inter,sans-serif;font-size:15px;font-weight:700;color:var(--text);cursor:pointer">Cancel</button>
       <button id="confirmOk" style="flex:1;padding:14px;border-radius:14px;border:none;background:var(--red);font-family:Inter,sans-serif;font-size:15px;font-weight:700;color:#fff;cursor:pointer">Delete</button>
     </div>
+  </div>
+</div>
+
+<!-- ─── SEND MONEY ─── -->
+<div class="section" id="sec-send">
+  <div class="card" style="border:none;background:transparent;box-shadow:none;padding:0;margin-bottom:20px">
+
+    <!-- Step 1: Send Form -->
+    <div id="sendStep1">
+      <div class="section-label" style="margin-bottom:16px"><i class="ri-send-plane-fill" style="color:var(--green)"></i> Send Money to Congo</div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-label">You Send</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+          <span style="font-size:24px;font-weight:900;color:var(--green)">$</span>
+          <input type="number" id="sendAmount" placeholder="0.00" style="flex:1;font-size:28px;font-weight:900;border:none;background:transparent;color:var(--text);outline:none;font-family:Inter,sans-serif" oninput="updateQuote()">
+          <span style="font-size:14px;font-weight:700;color:var(--text-sub)">USD</span>
+        </div>
+      </div>
+
+      <div id="fxDisplay" style="display:none" class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="card-label">They Receive</div>
+            <div style="font-size:22px;font-weight:900;color:var(--text);margin-top:4px" id="receiveAmount">0 CDF</div>
+          </div>
+          <div style="text-align:right">
+            <div class="card-label">Rate</div>
+            <div style="font-size:14px;font-weight:700;color:var(--green);margin-top:4px" id="fxRate">—</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+          <span style="font-size:12px;color:var(--text-sub);font-weight:600">Transfer Fee</span>
+          <span style="font-size:12px;font-weight:700;color:var(--text)" id="sendFee">$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <span style="font-size:12px;color:var(--text-sub);font-weight:600">Total Cost</span>
+          <span style="font-size:13px;font-weight:800;color:var(--text)" id="totalCost">$0.00</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Recipient Name</label>
+        <input type="text" id="receiverName" placeholder="Full name">
+      </div>
+
+      <div class="form-group">
+        <label>Phone Number (Congo)</label>
+        <input type="tel" id="receiverPhone" placeholder="+243 XXX XXX XXX" value="+243">
+      </div>
+
+      <div class="form-group">
+        <label>Payout Method</label>
+        <div style="display:flex;gap:10px" id="payoutBtns">
+          <button class="payout-btn active" onclick="pickPayout('airtel',this)" data-method="airtel">
+            <i class="ri-signal-tower-fill" style="font-size:20px"></i>
+            <span>Airtel Money</span>
+          </button>
+          <button class="payout-btn" onclick="pickPayout('mpesa',this)" data-method="mpesa">
+            <i class="ri-smartphone-fill" style="font-size:20px"></i>
+            <span>M-Pesa</span>
+          </button>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="reviewTransfer()" style="margin-top:8px">
+        <i class="ri-send-plane-fill"></i> Review Transfer
+      </button>
+    </div>
+
+    <!-- Step 2: Confirm -->
+    <div id="sendStep2" style="display:none">
+      <div class="section-label" style="margin-bottom:16px"><i class="ri-shield-check-fill" style="color:var(--green)"></i> Confirm Transfer</div>
+      <div class="card" id="confirmCard"></div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="submit-btn" onclick="goBackSend()" style="flex:1;background:var(--bar-bg);color:var(--text);box-shadow:none">Back</button>
+        <button class="submit-btn" onclick="confirmTransfer()" style="flex:1" id="confirmSendBtn">
+          <i class="ri-check-line"></i> Send Now
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 3: Success -->
+    <div id="sendStep3" style="display:none;text-align:center;padding:40px 20px">
+      <div style="width:80px;height:80px;border-radius:50%;background:rgba(0,184,114,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+        <i class="ri-check-double-fill" style="font-size:36px;color:var(--green)"></i>
+      </div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:8px">Transfer Sent!</div>
+      <div style="font-size:14px;color:var(--text-sub);margin-bottom:24px" id="successMsg">Your money is on its way</div>
+      <button class="submit-btn" onclick="resetSend()">Send Another</button>
+    </div>
+  </div>
+
+  <!-- Transaction History -->
+  <div class="section-label" style="margin-top:12px"><i class="ri-history-fill" style="color:var(--green)"></i> Transfer History</div>
+  <div id="transferHistory">
+    <div class="empty-state"><div class="empty-icon"><i class="ri-exchange-dollar-line" style="font-size:48px;color:var(--text-sub)"></i></div><p>No transfers yet</p></div>
   </div>
 </div>
 
@@ -3701,6 +3848,179 @@ function saveScannedItems() {
   closeModalForce();
   renderAll();
 }
+
+// ─── SEND MONEY ───
+let currentQuote = null;
+let currentTransferId = null;
+let selectedPayout = 'airtel';
+let quoteTimer = null;
+
+function pickPayout(method, btn) {
+  selectedPayout = method;
+  document.querySelectorAll('.payout-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateQuote();
+}
+
+function updateQuote() {
+  clearTimeout(quoteTimer);
+  const amount = parseFloat(document.getElementById('sendAmount').value);
+  if (!amount || amount <= 0) {
+    document.getElementById('fxDisplay').style.display = 'none';
+    return;
+  }
+  quoteTimer = setTimeout(() => fetchQuote(amount), 400);
+}
+
+async function fetchQuote(amount) {
+  try {
+    const res = await fetch('/api/transfer/quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, payout_method: selectedPayout })
+    });
+    currentQuote = await res.json();
+
+    document.getElementById('fxDisplay').style.display = 'block';
+    document.getElementById('receiveAmount').textContent = Number(currentQuote.receive_amount).toLocaleString() + ' CDF';
+    document.getElementById('fxRate').textContent = '1 USD = ' + Number(currentQuote.fx_rate).toLocaleString() + ' CDF';
+    document.getElementById('sendFee').textContent = '$' + Number(currentQuote.fee).toFixed(2);
+    document.getElementById('totalCost').textContent = '$' + (amount + currentQuote.fee).toFixed(2);
+  } catch (err) {
+    console.error('Quote fetch failed:', err);
+  }
+}
+
+function reviewTransfer() {
+  const amount = parseFloat(document.getElementById('sendAmount').value);
+  const name = document.getElementById('receiverName').value.trim();
+  const phone = document.getElementById('receiverPhone').value.trim();
+
+  if (!amount || amount <= 0) return alert('Enter an amount');
+  if (!name) return alert('Enter recipient name');
+  if (!phone || !phone.startsWith('+243') || phone.length < 12) return alert('Enter a valid Congo phone number (+243...)');
+  if (!currentQuote) return alert('Waiting for quote...');
+
+  const method = selectedPayout === 'airtel' ? 'Airtel Money' : 'M-Pesa';
+  document.getElementById('confirmCard').innerHTML = `
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:32px;font-weight:900;color:var(--green)">$${amount.toFixed(2)}</div>
+      <div style="font-size:13px;color:var(--text-sub);margin-top:4px"><i class="ri-arrow-down-line"></i> ${Number(currentQuote.receive_amount).toLocaleString()} CDF</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;display:grid;gap:10px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-sub);font-size:13px;font-weight:600">To</span><span style="font-weight:700;font-size:13px">${name}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-sub);font-size:13px;font-weight:600">Phone</span><span style="font-weight:700;font-size:13px">${phone}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-sub);font-size:13px;font-weight:600">Method</span><span style="font-weight:700;font-size:13px">${method}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-sub);font-size:13px;font-weight:600">Rate</span><span style="font-weight:700;font-size:13px">1 USD = ${Number(currentQuote.fx_rate).toLocaleString()} CDF</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-sub);font-size:13px;font-weight:600">Fee</span><span style="font-weight:700;font-size:13px">$${Number(currentQuote.fee).toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:10px"><span style="color:var(--text-sub);font-size:13px;font-weight:700">Total</span><span style="font-weight:900;font-size:15px;color:var(--green)">$${(amount + currentQuote.fee).toFixed(2)}</span></div>
+    </div>`;
+
+  document.getElementById('sendStep1').style.display = 'none';
+  document.getElementById('sendStep2').style.display = 'block';
+}
+
+function goBackSend() {
+  document.getElementById('sendStep2').style.display = 'none';
+  document.getElementById('sendStep1').style.display = 'block';
+}
+
+async function confirmTransfer() {
+  const btn = document.getElementById('confirmSendBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ri-loader-4-line"></i> Sending...';
+
+  try {
+    const amount = parseFloat(document.getElementById('sendAmount').value);
+    const createRes = await fetch('/api/transfer/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quote_id: currentQuote.quote_id,
+        sender_name: 'Akili User',
+        sender_phone: '',
+        receiver_name: document.getElementById('receiverName').value.trim(),
+        receiver_phone: document.getElementById('receiverPhone').value.trim(),
+        amount,
+        payout_method: selectedPayout
+      })
+    });
+    const createData = await createRes.json();
+    if (createData.error) throw new Error(createData.error);
+
+    currentTransferId = createData.transfer.id;
+
+    // Confirm the transfer
+    await fetch('/api/transfer/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transfer_id: currentTransferId })
+    });
+
+    document.getElementById('sendStep2').style.display = 'none';
+    document.getElementById('sendStep3').style.display = 'block';
+    document.getElementById('successMsg').textContent =
+      `${Number(currentQuote.receive_amount).toLocaleString()} CDF to ${document.getElementById('receiverName').value.trim()}`;
+
+    loadTransferHistory();
+  } catch (err) {
+    alert('Transfer failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-check-line"></i> Send Now';
+  }
+}
+
+function resetSend() {
+  document.getElementById('sendStep3').style.display = 'none';
+  document.getElementById('sendStep1').style.display = 'block';
+  document.getElementById('sendAmount').value = '';
+  document.getElementById('receiverName').value = '';
+  document.getElementById('receiverPhone').value = '+243';
+  document.getElementById('fxDisplay').style.display = 'none';
+  currentQuote = null;
+  currentTransferId = null;
+}
+
+async function loadTransferHistory() {
+  try {
+    const res = await fetch('/api/transfer/history');
+    const { transfers } = await res.json();
+    const el = document.getElementById('transferHistory');
+    if (!transfers || !transfers.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ri-exchange-dollar-line" style="font-size:48px;color:var(--text-sub)"></i></div><p>No transfers yet</p></div>';
+      return;
+    }
+    el.innerHTML = transfers.map(t => {
+      const d = new Date(t.created_at);
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const method = t.payout_method === 'mpesa' ? 'M-Pesa' : 'Airtel';
+      return `<div class="txn-item">
+        <div style="width:40px;height:40px;border-radius:12px;background:rgba(0,184,114,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="ri-send-plane-fill" style="color:var(--green);font-size:18px"></i>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px">${t.receiver_name}</div>
+          <div style="font-size:11px;color:var(--text-sub)">${method} • ${dateStr}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:800;font-size:14px">$${Number(t.amount_usd).toFixed(2)}</div>
+          <span class="txn-status ${t.status}">${t.status}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    // Offline / no DB — skip
+  }
+}
+
+// Load history when Send tab is shown
+const origTabClick = document.querySelectorAll('.tab');
+origTabClick.forEach(tab => {
+  tab.addEventListener('click', () => {
+    if (tab.dataset.tab === 'send') loadTransferHistory();
+  });
+});
 
 // ─── INIT ───
 loadData();
