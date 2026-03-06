@@ -11,9 +11,13 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Database ───
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+let pool = null;
+if (process.env.DATABASE_URL) {
+  pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+}
 
 async function initDB() {
+  if (!pool) { console.log('No DATABASE_URL — running without database'); return; }
   await pool.query(`
     CREATE TABLE IF NOT EXISTS transfers (
       id SERIAL PRIMARY KEY,
@@ -169,6 +173,7 @@ app.post('/api/transfer/create', async (req, res) => {
     }
 
     // Store in DB
+    if (!pool) return res.json({ transfer: { id: Date.now(), receiver_name, receiver_phone, amount_usd: amount, amount_cdf: receiveAmount, fee_usd: fee, fx_rate: fxRate, payout_method: payout_method || 'airtel', status: 'created', thunes_transaction_id: thunesId } });
     const result = await pool.query(
       `INSERT INTO transfers (sender_name, sender_phone, receiver_name, receiver_phone, amount_usd, amount_cdf, fee_usd, fx_rate, payout_method, status, thunes_transaction_id, thunes_external_id)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'created',$10,$11) RETURNING *`,
@@ -186,6 +191,8 @@ app.post('/api/transfer/create', async (req, res) => {
 app.post('/api/transfer/confirm', async (req, res) => {
   try {
     const { transfer_id } = req.body;
+    if (!pool) return res.json({ status: 'processing', transfer_id, demo: true });
+
     const dbResult = await pool.query('SELECT * FROM transfers WHERE id = $1', [transfer_id]);
     if (!dbResult.rows.length) return res.status(404).json({ error: 'Transfer not found' });
 
@@ -217,6 +224,7 @@ app.post('/api/transfer/confirm', async (req, res) => {
 // GET /api/transfer/status/:id — check status
 app.get('/api/transfer/status/:id', async (req, res) => {
   try {
+    if (!pool) return res.status(404).json({ error: 'No database configured' });
     const result = await pool.query('SELECT * FROM transfers WHERE id = $1', [req.params.id]);
     if (!result.rows.length) return res.status(404).json({ error: 'Transfer not found' });
     res.json({ transfer: result.rows[0] });
@@ -228,6 +236,7 @@ app.get('/api/transfer/status/:id', async (req, res) => {
 // GET /api/transfer/history — list all transfers
 app.get('/api/transfer/history', async (req, res) => {
   try {
+    if (!pool) return res.json({ transfers: [] });
     const result = await pool.query('SELECT * FROM transfers ORDER BY created_at DESC LIMIT 50');
     res.json({ transfers: result.rows });
   } catch (err) {
@@ -273,6 +282,7 @@ app.post('/api/kyc/verify', async (req, res) => {
 // POST /api/webhook/thunes — handle status updates from Thunes
 app.post('/api/webhook/thunes', async (req, res) => {
   try {
+    if (!pool) return res.json({ received: true, demo: true });
     const { id, status, external_id } = req.body;
     const statusMap = { '10000': 'paid', '20000': 'failed', '50000': 'cancelled' };
     const newStatus = statusMap[String(status)] || 'processing';
