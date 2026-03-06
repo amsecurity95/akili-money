@@ -299,7 +299,7 @@ app.post('/api/webhook/thunes', async (req, res) => {
 });
 
 // Serve static files — fallback to index.html
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
